@@ -62,7 +62,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// GET USER INFO (Protected)
+// GET USER INFO
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select("-password");
@@ -73,7 +73,7 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
-// UPDATE USER (Protected)
+// UPDATE USER
 router.put("/update", authMiddleware, async (req, res) => {
   const { name, email, password } = req.body;
   try {
@@ -92,7 +92,7 @@ router.put("/update", authMiddleware, async (req, res) => {
   }
 });
 
-// DELETE USER (Protected)
+// DELETE USER
 router.delete("/delete", authMiddleware, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.userId);
