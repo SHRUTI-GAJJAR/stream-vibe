@@ -47,7 +47,7 @@ startServer();
 app.use("/api", authRoutes);
 
 // Protected route (watching movies)
-app.get("/watch", authMiddleware, (req, res) => {
+app.get("/watch",authMiddleware, (req, res) => {
   res.send("Enjoy watching movies! Your token is still valid.");
 });
 

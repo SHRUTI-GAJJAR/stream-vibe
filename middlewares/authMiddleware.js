@@ -11,8 +11,8 @@ const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.id;  // ✅ Correct field
-    console.log("req.userId from middleware:", req.userId); // helpful log
+    req.userId = decoded.id;
+    console.log("req.userId from middleware:", req.userId);
     next();
   } catch (err) {
     return res.status(401).json({ error: "Invalid token" });
