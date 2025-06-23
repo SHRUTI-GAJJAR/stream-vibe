@@ -1,63 +1,48 @@
 
 const express = require("express");
-const cors = require('cors');
+const cors = require("cors");
 const mongoose = require("mongoose");
-const colors = require('colors');
-const authRoutes = require("./routes/auth");
-const authMiddleware = require("./middlewares/authMiddleware");
 require("dotenv").config();
+
+const authRoutes = require('./routes/auth');
+const subscriptionRoutes = require('./routes/subscription_r ');
+const authMiddleware = require('./middlewares/authMiddleware');
+const subscriptionMiddleware = require('./middlewares/subscriptionMiddleware');
 
 const app = express();
 app.use(express.json());
 
-// CORS configuration
-const allowedOrigins = [
-    'http://localhost:5173',
-  ];
-  
-  app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'], 
-  credentials: true // if you're using cookies/session
+// CORS setup
+app.use(cors({
+  origin: ['http://localhost:5173'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-  
-// DB Connect
-async function startServer() {
+// MongoDB
+async function connectDB() {
   try {
     await mongoose.connect(process.env.MONGO_URL);
-    console.log("MongoDB connected".green);
+    console.log("MongoDB connected");
   } catch (err) {
-    console.error("DB connection failed:".red, err);
+    console.error("MongoDB error:", err);
   }
 }
-
-startServer();
-
+connectDB();
 
 // Routes
 app.use("/api", authRoutes);
+app.use("/api", subscriptionRoutes);
 
-// Protected route (watching movies)
-app.get("/watch",authMiddleware, (req, res) => {
-  res.send("Enjoy watching movies! Your token is still valid.");
+// Watch movie route
+app.get("/watch", authMiddleware, subscriptionMiddleware, (req, res) => {
+  res.send("🎬 You can watch movies now.");
 });
 
-// Subscribe route (after token expires)
+// Subscription required
 app.get("/subscribe", (req, res) => {
-  res.send("Your time is up! Subscribe to continue watching.");
+  res.send("⛔ Trial expired. Please subscribe to continue.");
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`port is runnig on ${PORT}`.green);
-});
-
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

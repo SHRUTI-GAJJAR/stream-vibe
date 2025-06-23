@@ -2,16 +2,49 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken');
+const authMiddleware = require('./../middlewares/authMiddleware');
 const User = require('./../models/user');
-const authMiddleware = require('./../middlewares/authMiddleware')
-const router = express.Router();
 
-require("dotenv").config();
+const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
+
+// Dummy predefined plans (normally you store this in DB or admin config)
+const availablePlans = [
+  {
+    planName: "trial",
+    price: 0,
+    durationInMinutes: 600,
+    description: "One-time free trial for 600 minutes"
+  },
+  {
+    planName: "basic",
+    price: 99,
+    durationInMinutes: 1440,
+    description: "Basic plan for 1 day access"
+  },
+  {
+    planName: "premium",
+    price: 299,
+    durationInMinutes: 10080,
+    description: "Premium access for 7 days"
+  },
+  {
+    planName: "vip",
+    price: 999,
+    durationInMinutes: 43200,
+    description: "Full access for 30 days"
+  }
+];
+
+// ✅ GET /plans — Return available plans
+router.get("/plans", (req, res) => {
+  res.json(availablePlans);
+});
+
 
 // REGISTER
 router.post("/register", async (req, res) => {
-  const { name, email, password } =   req.body;
+  const { name, email, password } = req.body;
 
   try {
     if (!name || !email || !password) {
@@ -30,21 +63,22 @@ router.post("/register", async (req, res) => {
       password: hashed
     });
 
-    return res.status(201).json({ message: "User registered", userId: user._id });
+    // Assign trial plan
+    await Subscription.create({
+      userId: user._id,
+      planName: "trial",
+      price: 0,
+      durationInMinutes: 600
+    });
 
+    return res.status(201).json({ message: "User registered with trial", userId: user._id });
   } catch (err) {
     console.error("Register error:", err);
-    if (err.code === 11000) {
-      return res.status(400).json({ error: "Duplicate email found" });
-    }
-    return res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-
-
 // LOGIN
-
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
@@ -53,27 +87,19 @@ router.post("/login", async (req, res) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) return res.status(400).json({ error: "Invalid password" });
 
-  // ✅ Must use `id: user._id`
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "600m",
-  });
-
+  const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "600m" });
   res.json({ token });
 });
 
-
-// GET USER INFO
+// GET USER
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select("-password");
-    if (!user) return res.status(404).json({ error: "User not found" });
     res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
+  } catch {
+    res.status(500).json({ error: "Failed to get user" });
   }
 });
-
-
 
 
 // UPDATE USER

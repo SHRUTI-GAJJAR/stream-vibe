@@ -1,52 +1,104 @@
 
 const express = require("express");
-const Subscription = require("./../models/Subscription");
-const auth = require("./../middlewares/authMiddleware");
 const router = express.Router();
+const Subscription = require('./../models/subscription');
+const User = require("./../models/user");
+const bcrypt = require("bcryptjs");
+const authMiddleware = require("./../middlewares/authMiddleware");
 
-// Example Plans
-const plans = [
-  { name: "Basic", durationInDays: 7 },
-  { name: "Premium", durationInDays: 30 },
-  { name: "Ultimate", durationInDays: 90 },
-];
 
-// GET: All available plans
-router.get("/plans", (req, res) => {
-  res.json(plans);
-});
 
-// POST: Subscribe to a plan
-router.post("/subscribe", auth, async (req, res) => {
-  const { planName } = req.body;
-  const plan = plans.find((p) => p.name === planName);
-  if (!plan) return res.status(400).json({ error: "Invalid plan" });
+// Subscribe using token
+router.post("/subscribe", authMiddleware, async (req, res) => {
+  const { planName, price, durationInMinutes } = req.body;
 
-  const startDate = new Date();
-  const endDate = new Date();
-  endDate.setDate(startDate.getDate() + plan.durationInDays);
+  try {
+    await Subscription.deleteOne({ userId: req.userId });
 
-  const newSub = new Subscription({
-    userId: req.user.userId,
-    planName: plan.name,
-    durationInDays: plan.durationInDays,
-    startDate,
-    endDate,
-  });
+    const sub = await Subscription.create({
+      userId: req.userId,
+      planName,
+      price,
+      durationInMinutes
+    });
 
-  await newSub.save();
-  res.json({ message: `Subscribed to ${plan.name} plan until ${endDate.toDateString()}` });
-});
-
-// GET: Check if user has active subscription
-router.get("/check", auth, async (req, res) => {
-  const sub = await Subscription.findOne({ userId: req.user.userId }).sort({ endDate: -1 });
-
-  if (!sub || new Date(sub.endDate) < new Date()) {
-    return res.json({ subscribed: false, message: "No active subscription." });
+    res.json({ message: "Subscribed successfully", subscription: sub });
+  } catch (err) {
+    res.status(500).json({ error: "Subscription failed" });
   }
+});
 
-  res.json({ subscribed: true, plan: sub.planName, validUntil: sub.endDate });
+// Subscribe using email + password
+router.post("/subscribe-by-credentials", async (req, res) => {
+  const { email, password, planName, price, durationInMinutes } = req.body;
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: "Invalid password" });
+
+    await Subscription.deleteOne({ userId: user._id });
+
+    const sub = await Subscription.create({
+      userId: user._id,
+      planName,
+      price,
+      durationInMinutes
+    });
+
+    res.json({ message: "Subscribed successfully", subscription: sub });
+  } catch (err) {
+    res.status(500).json({ error: "Subscription failed" });
+  }
+});
+
+// ✅ GET current user’s subscription plan
+router.get("/plan", authMiddleware, async (req, res) => {
+  try {
+    const plan = await Subscription.findOne({ userId: req.userId });
+    if (!plan) return res.status(404).json({ error: "No active plan" });
+
+    res.json(plan);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch plan" });
+  }
+});
+
+// ✅ UPDATE current plan
+router.put("/plan", authMiddleware, async (req, res) => {
+  const { planName, price, durationInMinutes } = req.body;
+  try {
+    const update = {};
+    if (planName) update.planName = planName;
+    if (price !== undefined) update.price = price;
+    if (durationInMinutes !== undefined) update.durationInMinutes = durationInMinutes;
+
+    const updated = await Subscription.findOneAndUpdate(
+      { userId: req.userId },
+      update,
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ error: "Plan not found" });
+
+    res.json({ message: "Plan updated", subscription: updated });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update plan" });
+  }
+});
+
+// ✅ DELETE current plan
+router.delete("/plan", authMiddleware, async (req, res) => {
+  try {
+    const deleted = await Subscription.findOneAndDelete({ userId: req.userId });
+    if (!deleted) return res.status(404).json({ error: "No plan to delete" });
+
+    res.json({ message: "Plan deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete plan" });
+  }
 });
 
 module.exports = router;
