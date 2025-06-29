@@ -5,7 +5,7 @@ const Subscription = require('./../models/subscription');
 const User = require("./../models/user");
 const bcrypt = require("bcryptjs");
 const authMiddleware = require("./../middlewares/authMiddleware");
-
+  
 
 
 // Subscribe using token
@@ -102,3 +102,6 @@ router.delete("/plan", authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
+
+
+

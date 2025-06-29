@@ -21,7 +21,7 @@ const availablePlans = [
     price: 99,
     durationInMinutes: 1440,
     description: "Basic plan for 1 day access"
-  },
+  },  
   {
     planName: "premium",
     price: 299,
@@ -41,7 +41,7 @@ router.get("/plans", (req, res) => {
   res.json(availablePlans);
 });
 
-
+  
 // REGISTER
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
@@ -67,7 +67,7 @@ router.post("/register", async (req, res) => {
     await Subscription.create({
       userId: user._id,
       planName: "trial",
-      price: 0,
+      price: 0,     
       durationInMinutes: 600
     });
 
@@ -117,7 +117,7 @@ router.put("/update", authMiddleware, async (req, res) => {
 
     res.json({ message: "User updated", user: updatedUser });
   } catch (err) {
-    res.status(500).json({ error: "Update failed" });
+    res.status(500).json({ error: "Update failed" });   
   }
 });
 
@@ -126,10 +126,11 @@ router.delete("/delete", authMiddleware, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.userId);
     res.json({ message: "User deleted successfully" });
-  } catch (err) {
+  } catch (err) { 
     res.status(500).json({ error: "Delete failed" });
   }
 });
 
 
 module.exports = router;
+  
