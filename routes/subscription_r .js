@@ -5,6 +5,7 @@ const Subscription = require('./../models/subscription');
 const User = require("./../models/user");
 const bcrypt = require("bcryptjs");
 const authMiddleware = require("./../middlewares/authMiddleware");
+const WatchLog = require('./../models/watchlog');
   
 
 
@@ -65,6 +66,41 @@ router.get("/plan", authMiddleware, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch plan" });
   }
 });
+
+// ✅ GET /watch-time?email=...&password=...
+router.get("/watch-time", async (req, res) => {
+  const { email, password } = req.query;
+
+  try {
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    const logs = await WatchLog.find({ userId: user._id });
+    const totalMinutes = logs.reduce((sum, log) => sum + log.minutesWatched, 0);
+
+    res.json({
+      email: user.email,
+      name: user.name,
+      totalMinutesWatched: totalMinutes,
+    });
+  } catch (err) {
+    console.error("Watch-time error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 
 // ✅ UPDATE current plan
 router.put("/plan", authMiddleware, async (req, res) => {
