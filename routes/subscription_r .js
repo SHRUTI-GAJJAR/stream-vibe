@@ -76,7 +76,7 @@ router.get("/watch-time", async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() });    
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }

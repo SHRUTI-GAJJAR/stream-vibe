@@ -63,14 +63,6 @@ router.post("/register", async (req, res) => {
       password: hashed
     });
 
-    // Assign trial plan
-    await Subscription.create({
-      userId: user._id,
-      planName: "trial",
-      price: 0,     
-      durationInMinutes: 600
-    });
-
     return res.status(201).json({ message: "User registered with trial", userId: user._id });
   } catch (err) {
     console.error("Register error:", err);
