@@ -12,11 +12,25 @@ const subscriptionMiddleware = require('./middlewares/subscriptionMiddleware');
 const app = express();
 app.use(express.json());
 
-// CORS setup
+// // CORS setup
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://stream-vibe-app.vercel.app',
+];
+
 app.use(cors({
-  origin: ['http://localhost:5173'],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); 
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true); 
+    } else {
+      return callback(new Error('Not allowed by CORS')); 
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Authorization'],
 }));
 
 // MongoDB
