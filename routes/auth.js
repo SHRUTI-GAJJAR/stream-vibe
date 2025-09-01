@@ -6,7 +6,7 @@ const authMiddleware = require('./../middlewares/authMiddleware');
 const User = require('./../models/user');
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
-const bcrypt = require("bcryptjs");
+
 
 
 const router = express.Router();
