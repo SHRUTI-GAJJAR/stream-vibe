@@ -156,7 +156,7 @@ router.post("/forgot-password", async (req, res) => {
     await transporter.sendMail({
       from: `"Stream-Vibe-Security" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: "Password Reset OTP",
+      subject: " Stream Vibe - Password Reset OTP",
       text: `Your OTP is ${otp}. It is valid for 15 minutes.`,
     });
 
