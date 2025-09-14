@@ -153,19 +153,17 @@ router.post("/forgot-password", async (req, res) => {
     });
 
     // 5. Send mail
-    await transporter.sendMail({
-      from: `"Stream-Vibe-Security" <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: " Stream Vibe - Password Reset OTP",
-      text: `Your OTP is ${otp}. It is valid for 15 minutes.`,
-    });
-
-    res.json({ message: "OTP sent to email" });
-  } catch (err) {
-    console.error("Error in forgot-password:", err);
-    res.status(500).json({ error: "Error sending OTP" });
-  }
-});
+    try {
+  await transporter.sendMail({
+    from: `"Stream Vibe Security" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: "Password Reset OTP",
+    text: `Your OTP is ${otp}. It is valid for 15 minutes.`,
+  });
+} catch (err) {
+  console.error("Mail error:", err);
+  res.status(500).json({ error: "Error sending OTP", details: err.message });
+}
 
 // Reset Password with OTP
 router.post("/reset-password", async (req, res) => {
