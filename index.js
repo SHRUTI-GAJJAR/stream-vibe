@@ -12,6 +12,13 @@ const subscriptionMiddleware = require('./middlewares/subscriptionMiddleware');
 const app = express();
 app.use(express.json());
 
+// 🔍 Debug environment variables
+console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "Loaded" : "Missing");
+console.log("JWT_SECRET:", process.env.JWT_SECRET ? "Loaded" : "Missing");
+console.log("MONGO_URL:", process.env.MONGO_URL ? "Loaded" : "Missing");
+
+
 // // CORS setup
 const allowedOrigins = [
   'http://localhost:5173',
