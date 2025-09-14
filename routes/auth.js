@@ -143,14 +143,18 @@ router.post("/forgot-password", async (req, res) => {
     user.resetOTPExpiry = Date.now() + 15 * 60 * 1000; // 15 mins
     await user.save();
 
+    // 🔍 Debug logs
+    console.log("Auth user:", process.env.EMAIL_USER);
+    console.log("Auth pass length:", process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : "Missing");
+    
     // 4. Configure transporter
     const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // App password
-      },
-    });
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
     // 5. Send mail
     try {
