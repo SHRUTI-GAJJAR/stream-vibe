@@ -1,8 +1,8 @@
 
 const express = require("express");
+require("dotenv").config();
 const cors = require("cors");
 const mongoose = require("mongoose");
-require("dotenv").config();
 
 const authRoutes = require('./routes/auth');
 const subscriptionRoutes = require('./routes/subscription_r ');
