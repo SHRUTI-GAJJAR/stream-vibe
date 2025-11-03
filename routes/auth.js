@@ -143,35 +143,30 @@ router.post("/forgot-password", async (req, res) => {
     user.resetOTPExpiry = Date.now() + 15 * 60 * 1000; // 15 mins
     await user.save();
 
-    // 🔍 Debug logs
-    console.log("Auth user:", process.env.EMAIL_USER);
-    console.log("Auth pass length:", process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : "Missing");
-    
-    // 4. Configure transporter
+    // 4. Configure transporter (✅ secure Gmail App Password method)
     const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true, // use SSL
+      auth: {
+        user: process.env.EMAIL_USER, // your Gmail address
+        pass: process.env.EMAIL_PASS, // App password (not your normal Gmail password)
+      },
+    });
 
     // 5. Send mail
-    try {
-      await transporter.sendMail({
-        from: `"Stream Vibe Security" <${process.env.EMAIL_USER}>`,
-        to: user.email,
-        subject: "Password Reset OTP",
-        text: `Your OTP is ${otp}. It is valid for 15 minutes.`,
-      });
-      res.json({ message: "OTP sent successfully" }); // ✅ send response
-    } catch (err) {
-      console.error("Mail error:", err);
-      res.status(500).json({ error: "Error sending OTP", details: err.message });
-    }
+    await transporter.sendMail({
+      from: `"Stream Vibe Security" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "Password Reset OTP",
+      text: `Your OTP is ${otp}. It is valid for 15 minutes.`,
+    });
+
+    res.json({ message: "OTP sent successfully" });
 
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    console.error("Error in /forgot-password:", error);
+    res.status(500).json({ error: "Error sending OTP", details: error.message });
   }
 });
 
