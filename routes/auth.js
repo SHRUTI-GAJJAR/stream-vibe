@@ -6,7 +6,8 @@ const authMiddleware = require('./../middlewares/authMiddleware');
 const User = require('./../models/user');
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
-
+const dotenv = require('dotenv');
+dotenv.config();
 
 
 const router = express.Router();
