@@ -127,52 +127,44 @@ router.delete("/delete", authMiddleware, async (req, res) => {
   }
 });
 
-// Forgot Password - Send OTP
+
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
 
   try {
-    // 1. Find user
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // 2. Generate OTP
     const otp = crypto.randomInt(100000, 999999).toString();
 
-    // 3. Save OTP + expiry
     user.resetOTP = otp;
-    user.resetOTPExpiry = Date.now() + 15 * 60 * 1000; // 15 mins
+    user.resetOTPExpiry = Date.now() + 15 * 60 * 1000;
     await user.save();
 
-    // 🔍 Debug logs
-    console.log("Auth user:", process.env.EMAIL_USER);
-    console.log("Auth pass length:", process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : "Missing");
-    
-    // 4. Configure transporter
     const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-    // 5. Send mail
-    try {
-      await transporter.sendMail({
-        from: `"Stream Vibe Security" <${process.env.EMAIL_USER}>`,
-        to: user.email,
-        subject: "Password Reset OTP",
-        text: `Your OTP is ${otp}. It is valid for 15 minutes.`,
-      });
-      res.json({ message: "OTP sent successfully" }); // ✅ send response
-    } catch (err) {
-      console.error("Mail error:", err);
-      res.status(500).json({ error: "Error sending OTP", details: err.message });
-    }
+    await transporter.verify(); // ✅ test connection
+    console.log("✅ Gmail SMTP connected");
 
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    await transporter.sendMail({
+      from: `"Stream Vibe Security" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "Password Reset OTP",
+      text: `Your OTP is ${otp}. It is valid for 15 minutes.`,
+    });
+
+    res.json({ message: "OTP sent successfully" });
+  } catch (err) {
+    console.error("❌ Error sending OTP:", err);
+    res.status(500).json({ error: "Error sending OTP", details: err.message });
   }
 });
 
