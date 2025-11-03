@@ -6,6 +6,7 @@ const authMiddleware = require('./../middlewares/authMiddleware');
 const User = require('./../models/user');
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const {Resend} = require("resend");
 const dotenv = require('dotenv');
 dotenv.config();
 
